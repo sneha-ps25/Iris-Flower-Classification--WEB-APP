@@ -7,9 +7,13 @@ import json
 import os
 
 # -------------------- Page Config --------------------
+from PIL import Image
+
+icon = Image.open("logo.png")
+
 st.set_page_config(
     page_title="Iris Flower Classifier",
-    page_icon="🌸",
+    page_icon=icon,
     layout="wide",
     initial_sidebar_state="expanded"
 )
