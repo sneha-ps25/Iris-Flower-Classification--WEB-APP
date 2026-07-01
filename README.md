@@ -2,6 +2,10 @@
 
 A Streamlit web application that predicts the species of an Iris flower from user-provided sepal and petal measurements, using a pre-trained Random Forest classifier.
 
+## Live Demo
+
+https://iris-flower-classification-web-app-snehaps.streamlit.app/
+
 ## Features
 
 - Interactive sliders for sepal length, sepal width, petal length, and petal width
