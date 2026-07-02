@@ -5,15 +5,12 @@ import joblib
 import pickle
 import json
 import os
-
+import base64
+import time
 # -------------------- Page Config --------------------
-from PIL import Image
-
-icon = Image.open("logo.png")
-
 st.set_page_config(
     page_title="Iris Flower Classifier",
-    page_icon=icon,
+    page_icon="🌸",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -52,6 +49,25 @@ st.markdown("""
         font-weight: bold;
         white-space: nowrap;
     }
+            .loading-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+.loading-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #6a0dad;
+    border-radius: 10px;
+    animation: fillLoad 1s ease-in-out forwards;
+}
+@keyframes fillLoad {
+    from { width: 0%; }
+    to { width: 100%; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -224,18 +240,49 @@ with col2:
     st.dataframe(features_df, hide_index=True, use_container_width=True)
 
 input_features = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
+def get_image_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
+species_images = {
+    'setosa': 'setosa.webp',
+    'versicolor': 'versicolor.jpg',
+    'virginica': 'virginica.jpg',
+}
 # -------------------- Prediction --------------------
-if st.button("🎯 Predict Species", type="primary", use_container_width=True):
+if st.button("Predict Species 🪻", type="primary", use_container_width=True):
     if model is not None and model_info is not None:
         try:
+            loading_placeholder = st.empty()
+            loading_placeholder.markdown("""
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill"></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            time.sleep(1)
+
             prediction = model.predict(input_features)
             prediction_proba = model.predict_proba(input_features)[0]
             predicted_class = model_info['target_names'][prediction[0]]
 
-            st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
+            img_path = species_images.get(predicted_class)
+            img_b64 = get_image_base64(img_path) if img_path and os.path.exists(img_path) else None
+            img_tag = (
+                f'<img src="data:image/jpeg;base64,{img_b64}" '
+                f'style="width:120px; height:120px; object-fit:cover; border-radius:10px;">'
+                if img_b64 else ""
+            )
+
+            loading_placeholder.empty()
+
             st.markdown("### 📋 Prediction Result")
-            st.markdown(f"**Predicted Species:** **{predicted_class}**")
+            st.markdown(f"""
+            <div class="prediction-card" style="display:flex; align-items:center; gap:1.5rem;">
+                <p style="font-size:1.1rem;"><b>Predicted Species:</b> <b>{predicted_class}</b></p>
+                {img_tag}
+            </div>
+            """, unsafe_allow_html=True)
 
             st.markdown("### 📈 Confidence Scores")
             for i, prob in enumerate(prediction_proba):
@@ -252,12 +299,11 @@ if st.button("🎯 Predict Species", type="primary", use_container_width=True):
                     """, unsafe_allow_html=True)
                 with col_text:
                     st.write(f"**{species}**")
-            st.markdown('</div>', unsafe_allow_html=True)
+
         except Exception as e:
             st.error(f"❌ Error making prediction: {e}")
     else:
         st.error("❌ Model could not be loaded. Please check if the model files exist.")
-
 # -------------------- About Section --------------------
 with st.expander("📚 About the Iris Dataset"):
     st.markdown("""
